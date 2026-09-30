@@ -1,9 +1,11 @@
 /*
 Filename:KibichoKoblitz.h
 Usage: In exactly one C file, like where your main is,
-       #define KOBLITZ_IMPLEMENTATION
+       #define KIBICHO_KOBLITZ_IMPLEMENTATION
        #include "KibichoKoblitz.h"
 */
+#ifndef KIBICHO_KOBLITZ_H
+#define KIBICHO_KOBLITZ_H
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -14,7 +16,7 @@ Usage: In exactly one C file, like where your main is,
 #include <flint/flint.h>
 #include <flint/fmpz.h>
 #include "stb_ds.h"
-//clear && gcc Elliptic.c -lm -lgmp -lflint -o m.o && ./m.o
+#define KOBLITZ_HASHTABLE_CAPACITY 10003
 typedef struct koblitz_prime_curve_struct *KoblitzCurve;
 typedef struct koblitz_prime_point_struct *KoblitzPoint;
 typedef struct koblitz_prime_generator_struct *KoblitzPointGenerator;
@@ -76,6 +78,11 @@ void Koblitz_DivisionPolynomialRecursive(Koblitz_HashTable table, fmpz_t result,
 void Koblitz_DivisionPolynomial(Koblitz_HashTable table, fmpz_t result, fmpz_t n, fmpz_t x, fmpz_t y, fmpz_t prime, fmpz_t temp0);
 void Koblitz_DivisionPolynomialABC(fmpz_t a, fmpz_t b, fmpz_t c, KoblitzPoint point, Koblitz_HashTable tableP, KoblitzCurve curve);
 
+//Integers
+Koblitz_HashTable LogarithmTable(fmpz_t base, fmpz_t ell, fmpz_t prime);
+#ifdef KIBICHO_KOBLITZ_IMPLEMENTATION
+#ifndef KIBICHO_KOBLITZ_IMPLEMENTATION_ONCE
+#define KIBICHO_KOBLITZ_IMPLEMENTATION_ONCE
 KoblitzPoint Koblitz_CreatePoint()
 {
 	KoblitzPoint point = malloc(sizeof(struct koblitz_prime_point_struct));
@@ -585,6 +592,34 @@ void Koblitz_DivisionPolynomialABC(fmpz_t a, fmpz_t b, fmpz_t c, KoblitzPoint po
 	fmpz_clear(psi_M_minus1_P);fmpz_clear(psi_M_minus2_P);fmpz_clear(psi_2_P);fmpz_clear(temp0);fmpz_clear(temp1);
 }
 
+/*Integers*/
+Koblitz_HashTable LogarithmTable(fmpz_t base, fmpz_t ell, fmpz_t prime)
+{
+	Koblitz_HashTable lookup = Koblitz_CreateHashTable(KOBLITZ_HASHTABLE_CAPACITY);
+	fmpz_t temp0,c_projection_ell, key,value;
+	fmpz_init(temp0);fmpz_init(c_projection_ell);fmpz_init(key);fmpz_init(value);
+	
+	fmpz_sub_ui(c_projection_ell, prime, 1);
+	fmpz_mod(temp0, c_projection_ell, ell);
+	assert(fmpz_cmp_ui(temp0, 0) == 0);
+	fmpz_divexact(c_projection_ell, c_projection_ell, ell);
+	//Project to ell
+	fmpz_powm(c_projection_ell, base, c_projection_ell,prime);
+	fmpz_set_ui(key, 1);
+	int maxCount = fmpz_get_ui(prime);
+	for(int i = 0; i < maxCount; i++)
+	{
+		fmpz_set_ui(value, i);
+		Koblitz_SetElementHashTable(lookup, key, temp0, value);	
+		fmpz_mul(key, key, c_projection_ell);
+		fmpz_mod(key, key, prime);
+	}
+
+	
+	fmpz_clear(temp0);fmpz_clear(c_projection_ell);fmpz_clear(key);fmpz_clear(value);
+	return lookup;	
+}
+
 void TestKoblitzCurve()
 {
 	char *fieldCharacteristicString = "209959";
@@ -602,8 +637,7 @@ void TestKoblitzCurve()
 	//Test Division Polynomials 
 	fmpz_t divA,divB,divC,temp0,temp1,k,psi_kp1;
 	fmpz_init(divA);fmpz_init(divB);fmpz_init(divC);fmpz_init(temp0);fmpz_init(temp1);fmpz_init(k);fmpz_init(psi_kp1);
-	int tableCapacity = 1009;
-	Koblitz_HashTable tableP = Koblitz_CreateHashTable(tableCapacity);	
+	Koblitz_HashTable tableP = Koblitz_CreateHashTable(KOBLITZ_HASHTABLE_CAPACITY);	
 	Koblitz_InitializeHashTable(tableP, curve->generator->xyz->x, curve->generator->xyz->y, temp0, curve->fieldCharacteristic);
 	//Test a, b, c constants
 	Koblitz_DivisionPolynomialABC(divA,divB,divC, curve->generator->xyz, tableP, curve);	
@@ -630,4 +664,7 @@ void TestKoblitzCurve()
 	fmpz_clear(divA);fmpz_clear(divB);fmpz_clear(divC);fmpz_clear(temp0);fmpz_clear(temp1);fmpz_clear(k);fmpz_clear(psi_kp1);
 	Koblitz_DestroyCurve(curve);
 }
+#endif /* KIBICHO_KOBLITZ_IMPLEMENTATION_ONCE */
+#endif /* KIBICHO_KOBLITZ_IMPLEMENTATION */
+#endif /* KIBICHO_KOBLITZ_H */   
 
