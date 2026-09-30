@@ -1,5 +1,5 @@
-*.C linguist-detectable=true
-*.js linguist-detectable=false
+*.c linguist-detectable=true
+*.cpp linguist-detectable=false
 *.html linguist-detectable=false
 *.xml linguist-detectable=false
 
