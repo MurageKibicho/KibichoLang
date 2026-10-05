@@ -1,6 +1,7 @@
 #ifndef KIBICHOBATCHPRIME_H
 #define KIBICHOBATCHPRIME_H
 /*
+Prefix sum: https://en.algorithmica.org/hpc/algorithms/prefix/
 Upto 64 bits the largest prime gap is (maybe) not bigger than 588. SO we bit pack upto 10 bits 
 //Bitpacker from simdcomp:https://github.com/fast-pack/simdcomp/blob/master/src/avxbitpacking.c
 */
